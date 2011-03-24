@@ -1,0 +1,31 @@
+#!/usr/bin/env python2.6
+
+LIBDIR      = '/Users/silvan/projects/beagleplayer/lib/'
+TAMATARID   = 9 
+
+import os,sys
+import asyncore
+import time
+
+sys.path.append(LIBDIR)
+
+import Beagleplayer
+from Beagleplayer import *
+
+def main():
+    
+    config = Beagleplayer.Config.ListenerConf();
+    
+    Beagleplayer.Server.becomeDaemon('.', ''.join(['/tmp/beagleplayer-', str(config.port), '.log']))
+    Beagleplayer.Server.createPidfile(''.join(['/tmp/beagleplayer-', str(config.port), '.pid']))
+    
+    listener = Beagleplayer.Server.Listener(config)
+    
+    while asyncore.socket_map:
+        clk = int(time.time())
+        print "Beagleplayer ..."
+        clk_last = clk        
+        time.sleep(0.1) 
+
+if __name__ == "__main__":
+    main()
