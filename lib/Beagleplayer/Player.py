@@ -7,8 +7,10 @@ class Player():
     _libraryFile = '/home/root/audio/playlist.txt'
     _library = []
 
-    def __init__(self):
+    def __init__(self, library=None):
         self._setupClient()
+        if library is not None:
+            self._libraryFile = library
         self._loadLibrary()
 
     def __del__(self):
@@ -24,35 +26,24 @@ class Player():
                 print "failed opening library: '%s'" % (errmsg)
                 return False
         return True
-
+    
     def _setupClient(self):
-        self._client = mplayer.Client()
-        try:
-            print "connecting to MPlayer on localhost:1025"
-            self._client.connect(('localhost', 1025))
-        except:
-            print "connection to MPlayer failed"
-            self._client.close()
-            return False
-
-        try:
-            self._client.send("")
-        except socket.error, msg:
-            print "failed initializing MPlayer"
-            print msg
-            return False
-
+        self._client = mplayer.Player()
         return True
 
-
+    def request(self, msg, server):
+        print "got request!"
+        self.play(0)
+        
     def playFile(self, file):
-        if self._client is None or not self._client.connected:
-            print "playFile: client not connected!"
+        if self._client is None or not self._client.is_alive():
+            print "playFile: client not alive!"
             return False
 
+        print "play file: %s " % (file)
         cmd = "loadfile %s" % (file)
         try:
-            if not self._client.send_command(cmd):
+            if not self._client.loadfile(file, 0):
                 print "failed sending cmd '%s'" % (cmd)
                 return False
         except socket.error, msg:

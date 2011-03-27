@@ -42,26 +42,26 @@ def createPidfile(pidfile):
         
 class Listener(asyncore.dispatcher):
     
-    _config = None
-    _ip     = ''
-    _broker = None
+    _config         = None
+    handlerClass    = None
+    messageClass    = None
+    dispatcher      = None
     
-    def __init__(self, config):
+    def __init__(self, config, dispatcher=None, handlerClass=None, messageClass=None):
         self.setConfig(config)
         asyncore.dispatcher.__init__(self)
         self.createSocket(self.getHost(), self.getPort())
-        asyncore.dispatcher.set_reuse_addr(self)
-        self.setIp(socket.gethostbyname(socket.gethostname()))
-        #self.setBroker(broker) 
+        self.listen(5);
         
-    def setBroker(self, broker):
-        self._broker = broker
+        if handlerClass is None:
+            handlerClass = Handler
+        self.handlerClass = handlerClass
         
-    def getBroker(self):
-        return self._broker
-        
-    def setIp(self, ip):
-        self._ip = ip
+        if messageClass is None:
+            messageClass = Message.Message
+        self.messageClass = messageClass
+            
+        self.dispatcher = dispatcher
         
     def getHost(self):
         return self._config.host
@@ -70,23 +70,13 @@ class Listener(asyncore.dispatcher):
         return self._config.port
         
     def createSocket(self, host, port):
-        self.create_socket(socket.AF_INET, socket.SOCK_DGRAM)
+        print "socket on: (%s, %s)" % (host,port)
+        self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.set_reuse_addr()
         self.bind((host, port))
         
     def handle_read(self):
-        print "reading ... "
-        data, a = self.recvfrom(512)
-        
-        if data != '':
-            msg = TamatarMessage.Message()
-            msg.parse(data)
-            msg.setSenderHostPort(a)
-            br = self.getBroker()
-            if (br is not None):
-                br.addMessageIn(msg)
-            
-        print "addr: ", self._ip
-        print data, a
+        pass
         
     def setConfig(self, config):
         self._config = config
@@ -95,8 +85,14 @@ class Listener(asyncore.dispatcher):
         return 0
     
     def handle_accept(self):
-        pass
-    
+        acc = self.accept()
+        if acc is None:
+            pass
+        else:
+            sock,addr = acc
+            print "connect from: %s" % (addr[0]) 
+            self.handlerClass(sock, addr, self)
+            
     def handle_connect(self):
         pass
         
@@ -105,4 +101,43 @@ class Listener(asyncore.dispatcher):
     
     def handle_close(self):
         self.close()
+        
+
+class Handler(asyncore.dispatcher):
+    def __init__(self, sock, address, server):
+        self.server = server
+        self.sender = address
+        self.readbuff   = ''
+        self.writebuff  = ''
+        
+        asyncore.dispatcher.__init__(self, sock)
+    
+    def writable(self):
+        return (len(self.writebuff) > 0)
+        
+    def handle_read(self):
+        data = self.recv(1024)
+        if (data):
+            self.dispatchRequest(data)
+        
+    def handle_write(self):
+        if (len(self.writebuff) > 0):
+            sent = self.send(self.writebuff)
+            self.writebuff = self.writebuff[sent:]
+    
+    def handle_close(self):
+        self.close()
+        
+    def dispatchRequest(self, data):
+        if self.server.dispatcher is None:
+            return
+        
+        msgClass = self.server.messageClass
+        if msgClass is None:
+            return
+        
+        msg = msgClass()
+        msg.setSender(self.sender)
+        msg.fromString(data)
+        self.server.dispatcher.request(msg, self)
         

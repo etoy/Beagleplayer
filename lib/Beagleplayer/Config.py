@@ -24,8 +24,13 @@ class Conf(UserDict.DictMixin):
 
         
     
-class ListenerConf(Conf):
+class PlayerConf(Conf):
     
     def __init__(self, data={}):
         Conf.__init__(self, data)
-        self._data.update({'host':'', 'port':22044, 'broadcast':'<broadcast>'})
+        self._data.update({
+            'playlist':'/Users/silvan/projects/beagleplayer/playlist.txt',
+            'host':'127.0.0.1',
+            'port':22044,
+            'broadcast':'<broadcast>'
+        })

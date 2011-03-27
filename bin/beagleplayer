@@ -1,7 +1,6 @@
 #!/usr/bin/env python2.6
 
 LIBDIR      = '/Users/silvan/projects/beagleplayer/lib/'
-TAMATARID   = 9 
 
 import os,sys
 import asyncore
@@ -14,17 +13,21 @@ from Beagleplayer import *
 
 def main():
     
-    config = Beagleplayer.Config.ListenerConf();
+    config = Beagleplayer.Config.PlayerConf();
     
-    Beagleplayer.Server.becomeDaemon('.', ''.join(['/tmp/beagleplayer-', str(config.port), '.log']))
+    #Beagleplayer.Server.becomeDaemon('.', ''.join(['/tmp/beagleplayer-', str(config.port), '.log']))
     Beagleplayer.Server.createPidfile(''.join(['/tmp/beagleplayer-', str(config.port), '.pid']))
     
-    listener = Beagleplayer.Server.Listener(config)
+    player = Beagleplayer.Player.Player(config.playlist)
+    
+    listener = Beagleplayer.Server.Listener(config, player, None, Message.PlayerMessage)
+    
+    asyncore.loop()
     
     while asyncore.socket_map:
         clk = int(time.time())
-        print "Beagleplayer ..."
-        clk_last = clk        
+        #print "Beagleplayer ..."
+        clk_last = clk  
         time.sleep(0.1) 
 
 if __name__ == "__main__":
