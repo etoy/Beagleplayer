@@ -21,7 +21,8 @@ class Player():
         if os.path.isfile(self._libraryFile):
             try:
                 fh = open(self._libraryFile, 'r')
-                self._library = fh.readlines()
+                self._library = [l.strip() for l in fh.readlines()]
+                
             except IOError as (errno, errmsg):
                 print "failed opening library: '%s'" % (errmsg)
                 return False
@@ -31,30 +32,32 @@ class Player():
         self._client = mplayer.Player()
         return True
 
+    def isAlive(self):
+        return (self._client is not None and self._client.is_alive())
+
     def request(self, msg, server):
         print "got request!"
-        self.play(0)
+        self.loop(0)
+        self.playLibrary()
         
-    def playFile(self, file):
-        if self._client is None or not self._client.is_alive():
-            print "playFile: client not alive!"
-            return False
-
-        print "play file: %s " % (file)
-        cmd = "loadfile %s" % (file)
-        try:
-            if not self._client.loadfile(file, 0):
-                print "failed sending cmd '%s'" % (cmd)
-                return False
-        except socket.error, msg:
-            print "failed sending cmd '%s'" % (msg)
-            return False
-        return True
-
+    def loop(self, val=0):
+        if self.isAlive():
+            self._client.loop = val;
+            
+    def playList(self, file, append=0):
+        if self.isAlive():
+            out = self._client.loadlist(file, append)
+        
+    def playFile(self, file, append=0):
+        if self.isAlive():
+            out = self._client.loadfile(file, append)
+        
     def play(self, index):
         f = int(index)
         if f >= 0 and f < len(self._library):
             return self.playFile(self._library[f])
-        return False
 
-    
+    def playLibrary(self):
+        if (os.path.isfile(self._libraryFile)):
+            self.playList(self._libraryFile)
+            
