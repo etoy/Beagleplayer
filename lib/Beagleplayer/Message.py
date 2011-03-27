@@ -41,16 +41,25 @@ class Message():
     
     def parse(self, str):
         pass
-    """
-        reg = re.compile('(c|e)\:([0-9]{1,2})\:([0-9]{1,2})\:([a-zA-Z0-9]+)', re.IGNORECASE)
-        m = reg.match(str)
-        if (m is not None):
-            self.setType(m.group(1).strip())
-            self.setSender(m.group(2).strip())
-            self.setDest(m.group(3).strip())
-            self.setMessage(m.group(4).strip())
-    """
+    
 
 class PlayerMessage(Message):
+    command = None
+    value   = None
     def __init__(self):
         Message.__init__(self)
+    
+    def parse(self, str):
+        reg = re.compile('^([a-z]+)(\:([a-z0-9]+))?', re.IGNORECASE)
+        m = reg.match(str)
+        if m is not None:
+            c = m.group(1)
+            if c is not None and c is not '':
+                self.command = c.strip()
+            v = m.group(3)
+            if v is not None:
+                self.value = v.strip()
+            
+            
+        
+        

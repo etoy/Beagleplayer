@@ -36,9 +36,15 @@ class Player():
         return (self._client is not None and self._client.is_alive())
 
     def request(self, msg, server):
-        print "got request!"
-        self.loop(0)
-        self.playLibrary()
+        print "got request! cmd:%s value:%s" % (msg.command, msg.value)
+        
+        if msg.command == 'play':
+            if msg.value is not None and msg.value is not '':
+                self.play(msg.value)
+            else:
+                self.playLibrary()
+        elif msg.command == 'stop':
+            self.stop()
         
     def loop(self, val=0):
         if self.isAlive():
@@ -60,4 +66,9 @@ class Player():
     def playLibrary(self):
         if (os.path.isfile(self._libraryFile)):
             self.playList(self._libraryFile)
+    
+    def stop(self):
+        if (self.isAlive()):
+            self._client.stop()
+        
             
