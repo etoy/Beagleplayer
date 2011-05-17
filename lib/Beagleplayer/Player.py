@@ -2,21 +2,33 @@ import mplayer
 import socket
 import os
 
+from Message import PlayerMessage, TamatarMessage
+
 class Player():
+    _id     = 0
     _client = None
     _libraryFile = '/home/root/audio/playlist.txt'
     _library = []
 
-    def __init__(self, library=None):
+    def __init__(self, library=None, id=None):
         self._setupClient()
+        if id is not None:
+            self.setId(id)
         if library is not None:
             self._libraryFile = library
         self._loadLibrary()
+        
 
     def __del__(self):
         if (self._client is not None):
             self._client.close()
-
+    
+    def getId(self):
+        return self._id
+    
+    def setId(self, id):
+        self._id = id
+    
     def _loadLibrary(self):
         if os.path.isfile(self._libraryFile):
             try:
@@ -35,16 +47,24 @@ class Player():
     def isAlive(self):
         return (self._client is not None and self._client.is_alive())
 
-    def request(self, msg, server):
-        print "got request! cmd:%s value:%s" % (msg.command, msg.value)
+    def request(self, payload, sender):
+        print "got request! '%s'" % (payload)
+        msg = self.parseRequest(payload, sender)
+        if msg.getDest() != self.getId():
+            return
         
-        if msg.command == 'play':
-            if msg.value is not None and msg.value is not '':
-                self.play(msg.value)
-            else:
-                self.playLibrary()
-        elif msg.command == 'stop':
-            self.stop()
+        snd = msg.getSoundCommand()
+        if snd is None:
+            return
+        
+        self.play(snd)
+        
+    def parseRequest(self, payload, sender):
+        # TamatarMessage
+        msg = TamatarMessage()
+        msg.fromString(payload)
+        return msg
+        
         
     def loop(self, val=0):
         if self.isAlive():

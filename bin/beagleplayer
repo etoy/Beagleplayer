@@ -1,12 +1,19 @@
 #!/usr/bin/env python2.6
 
-LIBDIR      = '/Users/silvan/projects/beagleplayer/lib/'
-
 import os,sys
 import asyncore
 import time
 
-sys.path.append(LIBDIR)
+id = os.getenv('BPL_ID')
+if id is None:
+    print "Beagleplayer ID not set (BPL_ID)"
+    sys.exit(1)
+   
+bplLib = os.getenv('BPL_LIBDIR')
+if bplLib is None:
+    print "Beagleplayer libdir not set (BPL_LIBDIR)"
+    sys.exit(1)
+sys.path.append(bplLib)
 
 import Beagleplayer
 from Beagleplayer import *
@@ -18,17 +25,18 @@ def main():
     #Beagleplayer.Server.becomeDaemon('.', ''.join(['/tmp/beagleplayer-', str(config.port), '.log']))
     Beagleplayer.Server.createPidfile(''.join(['/tmp/beagleplayer-', str(config.port), '.pid']))
     
-    player = Beagleplayer.Player.Player(config.playlist)
+    player = Beagleplayer.Player.Player(config.playlist, id)
     
     listener = Beagleplayer.Server.Listener(config, player, None, Message.PlayerMessage)
     
     asyncore.loop()
-    
+    """
     while asyncore.socket_map:
         clk = int(time.time())
         #print "Beagleplayer ..."
         clk_last = clk  
         time.sleep(0.1) 
-
+    """
+    
 if __name__ == "__main__":
     main()

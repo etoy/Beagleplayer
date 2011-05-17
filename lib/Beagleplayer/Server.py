@@ -3,7 +3,6 @@ import asyncore
 import socket
 import time
 
-import Message
 
 class NullDevice:
     logfile = None
@@ -51,7 +50,7 @@ class Listener(asyncore.dispatcher):
         self.setConfig(config)
         asyncore.dispatcher.__init__(self)
         self.createSocket(self.getHost(), self.getPort())
-        self.listen(5);
+        #self.listen(5);
         
         if handlerClass is None:
             handlerClass = Handler
@@ -71,12 +70,14 @@ class Listener(asyncore.dispatcher):
         
     def createSocket(self, host, port):
         print "socket on: (%s, %s)" % (host,port)
-        self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.create_socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.set_reuse_addr()
         self.bind((host, port))
         
     def handle_read(self):
-        pass
+         data, a = self.recvfrom(512)
+         if data is not '':
+             self.dispatchRequest(data, a)
         
     def setConfig(self, config):
         self._config = config
@@ -102,6 +103,12 @@ class Listener(asyncore.dispatcher):
     def handle_close(self):
         self.close()
         
+    def dispatchRequest(self, data, sender):
+        if self.dispatcher is None:
+            return
+        
+        self.dispatcher.request(data, sender)
+        
 
 class Handler(asyncore.dispatcher):
     def __init__(self, sock, address, server):
@@ -116,9 +123,10 @@ class Handler(asyncore.dispatcher):
         return (len(self.writebuff) > 0)
         
     def handle_read(self):
-        data = self.recv(1024)
+        data, a = self.recv(1024)
+        print "data: %s" % (data)
         if (data):
-            self.dispatchRequest(data)
+            self.server.dispatchRequest(data, a)
         
     def handle_write(self):
         if (len(self.writebuff) > 0):
@@ -127,17 +135,4 @@ class Handler(asyncore.dispatcher):
     
     def handle_close(self):
         self.close()
-        
-    def dispatchRequest(self, data):
-        if self.server.dispatcher is None:
-            return
-        
-        msgClass = self.server.messageClass
-        if msgClass is None:
-            return
-        
-        msg = msgClass()
-        msg.setSender(self.sender)
-        msg.fromString(data)
-        self.server.dispatcher.request(msg, self)
         

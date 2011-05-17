@@ -1,0 +1,57 @@
+#!/bin/sh
+#
+# tamatar: - 80 45
+# description: Starts and stops Tamatar-server 
+PORT=22044
+
+start() {
+        echo -n "Starting Beagleplayer ... "
+        # Code here to start the program and check it's OK
+        /usr/bin/python /home/root/Beagleplayer/bin/beagleplayer
+	echo "OK"
+        return 0
+}
+
+stop() {
+        echo -n "Stopping Beagleplayer ... "
+        # Code here to stop the program and check it's dead
+	if [ -f "/tmp/tamatar-$PORT.pid" ]
+	then
+		kill -9 $(cat "/tmp/beagleplayer-$PORT.pid")
+		rm -f "/tmp/beagleplayer-$PORT.pid"
+	fi
+
+	echo "OK"
+        return 0
+}
+
+status() {
+        # Code here to check the status of the program
+        echo $(ps ax | grep beagleplayer | grep $PORT)
+	return 0
+}
+
+case "$1" in
+  start)
+        start
+        ;;
+  stop)
+        stop
+        ;;
+  status)
+        status
+        ;;
+  restart)
+        stop
+        start
+        ;;
+  *)
+        echo $"Usage: $0 {start|stop|status|restart}"
+        exit 1
+esac
+
+exit $?
+
+
+Read more: http://wiki.linuxquestions.org/wiki/Creating_startup_scripts#ixzz0d4ONIJRj
+

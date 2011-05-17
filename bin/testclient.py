@@ -6,6 +6,7 @@ import time
 import re
 
 HOST = '127.0.0.1'
+#HOST = '192.168.1.71'
 PORT = 22044
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

@@ -49,6 +49,8 @@ class PlayerMessage(Message):
     def __init__(self):
         Message.__init__(self)
     
+    
+    
     def parse(self, str):
         reg = re.compile('^([a-z]+)(\:([a-z0-9]+))?', re.IGNORECASE)
         m = reg.match(str)
@@ -60,6 +62,40 @@ class PlayerMessage(Message):
             if v is not None:
                 self.value = v.strip()
             
+    def parseTamatarMsg(self, str):
+        reg = re.compile()
+        
+        
+        
+"""
+    Message format: <type>:<sender>:<destination>:<cmd>
+"""
+
+class TamatarMessage(Message):
+    
+    def toString(self):
+        return "%s:%s:%s:%s" % (self.getType(), self.getSender(), self.getDest(), self.getMessage())
+        
+    def parse(self, str):
+        reg = re.compile('(c|e)\:([0-9]{1,2})\:([0-9]{1,2})\:([a-zA-Z0-9]+)', re.IGNORECASE)
+        m = reg.match(str)
+        if (m is not None):
+            self.setType(m.group(1).strip())
+            self.setSender(m.group(2).strip())
+            self.setDest(m.group(3).strip())
+            self.setMessage(m.group(4).strip())
             
+    def isSoundCommand(self):
+        scmd = self.getSoundCommand()
+        if scmd is not None:
+            return True
+        return False
         
-        
+    def getSoundCommand(self):
+        reg = re.compile('s([0-9]+)', re.IGNORECASE)
+        m = reg.match(self.getMessage())
+        if m is not None:
+            return m.group(1)
+            
+        return None
+   
