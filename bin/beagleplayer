@@ -15,6 +15,12 @@ if bplLib is None:
     sys.exit(1)
 sys.path.append(bplLib)
 
+loop = os.getenv('BPL_LOOP')
+if loop is not None and loop == '1':
+    loop = True
+else:
+    loop = False
+
 import Beagleplayer
 from Beagleplayer import *
 
@@ -22,21 +28,17 @@ def main():
     
     config = Beagleplayer.Config.PlayerConf();
     
-    #Beagleplayer.Server.becomeDaemon('.', ''.join(['/tmp/beagleplayer-', str(config.port), '.log']))
+    Beagleplayer.Server.becomeDaemon('.', ''.join(['/tmp/beagleplayer-', str(config.port), '.log']))
     Beagleplayer.Server.createPidfile(''.join(['/tmp/beagleplayer-', str(config.port), '.pid']))
     
     player = Beagleplayer.Player.Player(config.playlist, id)
+    player.loop(loop)
     
     listener = Beagleplayer.Server.Listener(config, player, None, Message.PlayerMessage)
     
-    asyncore.loop()
-    """
     while asyncore.socket_map:
-        clk = int(time.time())
-        #print "Beagleplayer ..."
-        clk_last = clk  
-        time.sleep(0.1) 
-    """
+        player.checkLoop()
+        asyncore.loop(timeout=.5,count=1)
     
 if __name__ == "__main__":
     main()

@@ -92,10 +92,10 @@ class TamatarMessage(Message):
         return False
         
     def getSoundCommand(self):
-        reg = re.compile('s([0-9]+)', re.IGNORECASE)
+        reg = re.compile('s([0-9]+|stop|all)', re.IGNORECASE)
         m = reg.match(self.getMessage())
         if m is not None:
-            return m.group(1)
+            return m.group(1).strip()
             
         return None
    
